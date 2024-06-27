@@ -3,20 +3,33 @@ cf_algo = function(predictor, predictor_prot, x_interest, pred_column, param_set
                     p_rec, p_rec_gen, p_rec_use_orig, p_mut, p_mut_gen, p_mut_use_orig, k, weights, 
                     init_strategy, cond_sampler = NULL, quiet) {
   
-  codomain = ParamSet$new(list(
-    ParamDbl$new("prob_prot", tags = "minimize"),
-    ParamDbl$new("dist_x_interest", tags = "minimize"),
-    ParamDbl$new("dist_train", tags = "minimize")
-  ))
+  # codomain = ParamSet$new(list(
+  #   ParamDbl$new("prob_prot", tags = "minimize"),
+  #   ParamDbl$new("dist_x_interest", tags = "minimize"),
+  #   ParamDbl$new("dist_train", tags = "minimize")
+  # ))
+  
+  codomain = ps(
+    prob_prot = p_dbl(tags = "minimize"),
+    dist_x_interest = p_dbl(tags = "minimize"),
+    dist_train = p_dbl(tags = "minimize")
+  )
   
   fitness_function = make_fitness_function_cf(
     predictor, predictor_prot, x_interest, pred_column, weights, k, fixed_features, param_set
   )
   
+  # flex_cols = setdiff(names(x_interest), fixed_features)
+  # sdevs_flex_num_feats = sdevs_num_feats[names(sdevs_num_feats) %in% flex_cols]
+  # param_set_flex = param_set$clone()
+  # param_set_flex$subset(flex_cols)
+  
   flex_cols = setdiff(names(x_interest), fixed_features)
-  sdevs_flex_num_feats = sdevs_num_feats[names(sdevs_num_feats) %in% flex_cols]
-  param_set_flex = param_set$clone()
-  param_set_flex$subset(flex_cols)
+  if (!is.null(sdevs_num_feats)) {
+    sdevs_flex_num_feats = sdevs_num_feats[names(sdevs_num_feats) %in% flex_cols]
+  }
+  
+  param_set_flex = param_set$clone()$subset(flex_cols)
   
   objective = bbotk::ObjectiveRFunDt$new(
     fun = fitness_function, 
